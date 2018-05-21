@@ -1,0 +1,11 @@
+[main]
+schedule = "@every 90s"
+
+[ledisdb]
+addr = "localhost:6379"
+password = ""
+db = 0
+
+[plugin."1forge"]
+path = "plugins/oneforge.so"
+list_key = "oneforge"

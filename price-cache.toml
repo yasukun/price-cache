@@ -2,10 +2,10 @@
 schedule = "@every 90s"
 
 [ledisdb]
-addr = "localhost:6379"
+addr = "localhost:6380"
 password = ""
 db = 0
 
-[plugin."1forge"]
+[plugin."oneforge"]
 path = "plugins/oneforge.so"
 list_key = "oneforge"

@@ -1,0 +1,8 @@
+[oneforge]
+url = "https://forex.1forge.com/1.0.3/quotes?pairs=%s&api_key=%s"
+pairs = "AUDJPY,AUDUSD,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY,AUDCAD,AUDCHF"
+api_key = ""
+
+[[oneforge.headers]]
+name = "User-Agent"
+value = "Golang_oneforge_api_Bot/1.0"

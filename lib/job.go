@@ -11,7 +11,6 @@ import (
 	"github.com/go-redis/redis"
 )
 
-const PLUGIN_INIT_METHOD = "LoadConf"
 const PLUGIN_RUN_METHOD = "TakePrice"
 
 type Runner struct {
@@ -61,18 +60,11 @@ func (r Runner) execPlugin() (string, error) {
 	if err != nil {
 		return jsonStr, err
 	}
-	f, err := p.Lookup(PLUGIN_INIT_METHOD)
-	if err != nil {
-		return jsonStr, errors.New(fmt.Sprintf("plugin.Lookup error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_INIT_METHOD, err))
-	}
-	if err = f.(func(string) error)(r.PluginConfig); err != nil {
-		return jsonStr, errors.New(fmt.Sprintf("method execute error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_INIT_METHOD, err))
-	}
-	f2, err := p.Lookup(PLUGIN_RUN_METHOD)
+	f, err := p.Lookup(PLUGIN_RUN_METHOD)
 	if err != nil {
 		return jsonStr, errors.New(fmt.Sprintf("plugin.Lookup error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_RUN_METHOD, err))
 	}
-	jsonStr, err = f2.(func() (string, error))()
+	jsonStr, err = f.(func() (string, error))()
 	if err != nil {
 		return jsonStr, errors.New(fmt.Sprintf("method execute error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_RUN_METHOD, err))
 	}
@@ -86,6 +78,7 @@ func (r Runner) Run() {
 		log.Println(err)
 		return
 	}
+	log.Println(jsonStr)
 	if err = r.Client.RPush(r.ListKey, jsonStr).Err(); err != nil {
 		log.Println(fmt.Sprintf("RPush error: %v", err))
 		return

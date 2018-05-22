@@ -14,10 +14,10 @@ import (
 const PLUGIN_RUN_METHOD = "TakePrice"
 
 type Runner struct {
-	PluginPath   string
-	PluginConfig string
-	ListKey      string
-	Client       *redis.Client
+	Plugin  *plugin.Plugin
+	ListKey string
+	Client  *redis.Client
+	Debug   bool
 }
 
 // NewRunner ...
@@ -40,33 +40,44 @@ func NewRunner(configAbs, pluginKey string, conf Config) (Runner, error) {
 		Password: conf.Ledisdb.Password,
 		DB:       conf.Ledisdb.DB,
 	})
+	p, err := loadPlugin(pluginPathAbs)
+	if err != nil {
+		return runner, errors.New(fmt.Sprintf("load plugin error: %v", err))
+	}
 	runner = Runner{
-		PluginPath:   pluginPathAbs,
-		PluginConfig: configAbs,
-		ListKey:      listKey,
-		Client:       client,
+		Plugin:  p,
+		ListKey: listKey,
+		Client:  client,
+		Debug:   conf.Main.Debug,
 	}
 	return runner, nil
+}
+
+// loadPlugin ...
+func loadPlugin(pluginPath string) (*plugin.Plugin, error) {
+	var p *plugin.Plugin
+	if _, err := os.Stat(pluginPath); err != nil {
+		return p, errors.New(fmt.Sprintf("plugin %s does not exists", pluginPath))
+	}
+
+	p, err := plugin.Open(pluginPath)
+	if err != nil {
+		return p, err
+	}
+	return p, nil
 }
 
 // (r Runner) execPlugin ...
 func (r Runner) execPlugin() (string, error) {
 	var jsonStr string
-	if _, err := os.Stat(r.PluginPath); err != nil {
-		return jsonStr, errors.New(fmt.Sprintf("plugin %s does not exists", r.PluginPath))
-	}
 
-	p, err := plugin.Open(r.PluginPath)
+	f, err := r.Plugin.Lookup(PLUGIN_RUN_METHOD)
 	if err != nil {
-		return jsonStr, err
-	}
-	f, err := p.Lookup(PLUGIN_RUN_METHOD)
-	if err != nil {
-		return jsonStr, errors.New(fmt.Sprintf("plugin.Lookup error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_RUN_METHOD, err))
+		return jsonStr, errors.New(fmt.Sprintf("plugin.Lookup error %v, method %s", err, PLUGIN_RUN_METHOD))
 	}
 	jsonStr, err = f.(func() (string, error))()
 	if err != nil {
-		return jsonStr, errors.New(fmt.Sprintf("method execute error name: %s, method: %s, error: %v", r.PluginPath, PLUGIN_RUN_METHOD, err))
+		return jsonStr, errors.New(fmt.Sprintf("method execute error %v, method %s", err, PLUGIN_RUN_METHOD))
 	}
 	return jsonStr, nil
 }
@@ -78,7 +89,9 @@ func (r Runner) Run() {
 		log.Println(err)
 		return
 	}
-	log.Println(jsonStr)
+	if r.Debug {
+		log.Println(jsonStr)
+	}
 	if err = r.Client.RPush(r.ListKey, jsonStr).Err(); err != nil {
 		log.Println(fmt.Sprintf("RPush error: %v", err))
 		return

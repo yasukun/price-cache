@@ -1,5 +1,6 @@
 [main]
 schedule = "@every 90s"
+debug = false
 
 [ledisdb]
 addr = "localhost:6380"

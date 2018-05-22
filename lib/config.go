@@ -10,6 +10,7 @@ type Config struct {
 
 type MainConfig struct {
 	Schedule string `toml:"schedule"`
+	Debug    bool   `toml:"debug"`
 }
 
 type LedisdbConfig struct {
